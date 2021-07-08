@@ -1,7 +1,7 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:td_movie/blocs/blocs.dart';
+import 'package:td_movie/domain/model/models.dart';
 import 'package:td_movie/ui/components/common/bottom_loader.dart';
 import 'package:td_movie/ui/components/common/loading_widget.dart';
 import 'package:td_movie/ui/components/common/movie_item.dart';
@@ -55,6 +55,7 @@ class _SearchPageState extends State<SearchPage> {
 
   void _onQueryChanged() {
     _searchBloc.add(TextChangedEvent(query: _textEditingController.text));
+    setState(() {});
   }
 
   void _onScroll() {
@@ -159,47 +160,84 @@ class _SearchPageState extends State<SearchPage> {
       builder: (context, state) {
         return state.switchResult(
           onSearchLoadSuccess: (successState) {
-            final width = (MediaQuery.of(context).size.width / 2) - 16;
-            return Column(
-              children: [
-                GridView.builder(
-                  controller: _scrollController,
-                  itemCount: successState.movies.length,
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    mainAxisExtent: width * 2,
-                  ),
-                  itemBuilder: (context, index) {
-                    return InkWell(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 8),
-                        child: MovieItem(
-                          movie: successState.movies[index],
-                        ),
-                      ),
-                      onTap: () => navigateToDetail(successState.movies[index]),
-                    );
-                  },
-                ),
-                Visibility(
-                  visible: successState.isEndReached,
-                  child: BottomLoader(),
-                ),
-              ],
+            return Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8),
+              child: _renderScrollView(
+                successState.movies,
+                successState.isEndReached,
+              ),
             );
           },
           onSearchEmptyState: (emptyState) => Container(
             child: Center(
-              child: Text('Empty'),
+              child: Text(
+                'No Matched Movies.',
+                style: TextStyle(
+                  color: Colors.white,
+                ),
+              ),
             ),
           ),
           onSearchLoadInProgress: (loadingState) => LoadingWidget(message: ''),
-          onSearchLoadFailure: (errorState) =>
-              Text(errorState.error.toString()),
+          onSearchLoadFailure: (errorState) => Center(
+            child: Text(
+              'No Matched Movies.',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
         );
       },
     );
   }
+
+  Widget _renderScrollView(List<Movie> movies, bool isEndReached) {
+    final scrollView = CustomScrollView(
+      controller: _scrollController,
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+      slivers: [
+        _renderGridItems(movies),
+        _renderBottomLoader(isEndReached),
+      ],
+    );
+    return scrollView;
+  }
+
+  Widget _renderGridItems(List<Movie> movies) => SliverGrid(
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisSpacing: 12.0,
+          mainAxisSpacing: 12.0,
+          childAspectRatio: (1 / 2),
+          crossAxisCount: 2,
+        ),
+        delegate: SliverChildListDelegate(
+          movies
+              .map(
+                (movie) => InkWell(
+                  child: MovieItem(movie: movie),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      navigateToDetail(movie),
+                    );
+                  },
+                ),
+              )
+              .toList(),
+        ),
+      );
+
+  Widget _renderBottomLoader(bool isEndReached) => SliverList(
+        delegate: SliverChildListDelegate(
+          [
+            Visibility(
+              visible: !isEndReached,
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: BottomLoader(),
+              ),
+            )
+          ],
+        ),
+      );
 
   List<Widget> _buildActions() {
     return _textEditingController.text.isEmpty

@@ -4,6 +4,7 @@ version: 3.0.0
 homepage: https://github.com/vrtdev/sealed_class_generator
 repository: https://github.com/vrtdev/sealed_class_generator
 issue_tracker: https://github.com/vrtdev/sealed_class_generator/issues
+publish_to: none
 
 environment:
   sdk: ">=2.7.0 <3.0.0"
