@@ -28,6 +28,7 @@ class Cast {
 
   bool adult;
   int gender;
+  @JsonKey(name: 'id')
   int id;
   @JsonKey(name: 'known_for_department')
   Department knownForDepartment;

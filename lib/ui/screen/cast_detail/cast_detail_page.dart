@@ -1,28 +1,39 @@
 import 'package:expandable_text/expandable_text.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:td_movie/base/base.dart';
+import 'package:td_movie/blocs/cast_detail/blocs.dart';
 import 'package:td_movie/domain/model/cast.dart';
 import 'package:td_movie/platform/services/api/urls.dart';
 import 'package:td_movie/ui/components/collapsed_appbar_title.dart';
+import 'package:td_movie/ui/components/common/progress_loading.dart';
 
-class CastDetail extends StatelessWidget {
-  const CastDetail({Key key, this.cast}) : super(key: key);
-
-  final Cast cast;
+class CastDetailPage extends StatelessWidget {
+  const CastDetailPage({Key key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        color: Colors.blueGrey,
-        child: SafeArea(
-          child: Stack(
-            children: [
-              _buildBackdropCast(cast.profilePath),
-              _buildColorFilter(),
-              _buildContent(context, cast),
-            ],
-          ),
-        ),
+      body: BlocBuilder<CastDetailBloc, BaseState>(
+        builder: (context, state) {
+          if (state is LoadedState) {
+            return Container(
+              color: Colors.black,
+              child: SafeArea(
+                child: Stack(
+                  children: [
+                    _buildBackdropCast(state.data.profilePath),
+                    _buildColorFilter(),
+                    _buildContent(context, state.data),
+                  ],
+                ),
+              ),
+            );
+          }
+          return Center(
+            child: ProgressLoading(size: 32),
+          );
+        },
       ),
     );
   }
@@ -32,11 +43,12 @@ Widget _buildBackdropCast(String profilePath) {
   String profileImageUrl = '${Urls.originalImagePath}$profilePath';
   return Container(
     decoration: BoxDecoration(
-        color: Colors.transparent,
-        image: DecorationImage(
-          fit: BoxFit.cover,
-          image: NetworkImage(profileImageUrl),
-        )),
+      color: Colors.transparent,
+      image: DecorationImage(
+        fit: BoxFit.cover,
+        image: NetworkImage(profileImageUrl),
+      ),
+    ),
   );
 }
 
@@ -56,13 +68,13 @@ Widget _buildColorFilter() {
 }
 
 Widget _buildContent(BuildContext context, Cast cast) {
-  final height = MediaQuery.of(context).size.height * 3.5 / 7 - 56;
+  final height = MediaQuery.of(context).size.height * 0.30;
   return NestedScrollView(
     headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
       return [
         SliverAppBar(
           backgroundColor: Colors.black,
-          expandedHeight: height * 1.5,
+          expandedHeight: height * 1.44,
           floating: false,
           pinned: true,
           leading: Align(
@@ -70,7 +82,7 @@ Widget _buildContent(BuildContext context, Cast cast) {
             child: Padding(
               padding: EdgeInsets.only(
                 top: 4,
-                left: 8,
+                left: 12,
                 bottom: 8,
               ),
               child: _buildBackButton(context),
@@ -81,17 +93,11 @@ Widget _buildContent(BuildContext context, Cast cast) {
             title: CollapsedAppBarTitle(
               child: Text(cast.name),
             ),
-            background: Stack(
-              children: [
-                _buildBackdropCast(cast.profilePath),
-                _buildColorFilter(),
-                Center(
-                  child: _buildPosterImage(
-                    cast.profilePath,
-                    height: height,
-                  ),
-                ),
-              ],
+            background: Center(
+              child: _buildPosterImage(
+                cast.profilePath,
+                height: height,
+              ),
             ),
           ),
         ),
@@ -102,6 +108,11 @@ Widget _buildContent(BuildContext context, Cast cast) {
       child: Column(
         children: [
           _buildCastName(cast.name),
+          SizedBox(height: 8),
+          _buildPlaceOfBirth(cast.placeOfBirth),
+          SizedBox(height: 8),
+          _buildBirthdayAndPopularity(cast.birthday, cast.popularity),
+          SizedBox(height: 16),
           _buildBiography(cast.biography),
         ],
       ),
@@ -109,7 +120,7 @@ Widget _buildContent(BuildContext context, Cast cast) {
   );
 }
 
-Widget _buildCastName(String name){
+Widget _buildCastName(String name) {
   return Center(
     child: Text(
       name,
@@ -123,7 +134,68 @@ Widget _buildCastName(String name){
   );
 }
 
-Widget _buildBiography(String biography){
+Widget _buildPlaceOfBirth(String place) {
+  return Row(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [
+      Icon(
+        Icons.place,
+        color: Colors.lightBlueAccent,
+      ),
+      Text(
+        place == null ? "Place of birth unknown" : place,
+        style: TextStyle(
+          color: Colors.white,
+        ),
+        textAlign: TextAlign.center,
+        maxLines: 1,
+      ),
+    ],
+  );
+}
+
+Widget _buildBirthdayAndPopularity(String birthday, double popularity) {
+  return Row(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [
+      Row(
+        children: [
+          Icon(
+            Icons.date_range,
+            color: Colors.pinkAccent,
+          ),
+          Text(
+            birthday == null ? "Birthday unknown" : birthday,
+            style: TextStyle(
+              color: Colors.white,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+      SizedBox(
+        width: 20,
+      ),
+      Row(
+        children: [
+          Icon(
+            Icons.star,
+            color: Colors.amber,
+          ),
+          Text(
+            '$popularity',
+            style: TextStyle(
+              color: Colors.white,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    ],
+  );
+}
+
+Widget _buildBiography(String biography) {
   return Column(
     children: [
       Align(
@@ -140,9 +212,9 @@ Widget _buildBiography(String biography){
       Padding(
         padding: EdgeInsets.only(top: 8),
         child: ExpandableText(
-          biography,
+          biography == "" ? "Biography unknown" : biography,
           expandText: 'Show More',
-          maxLines: 3,
+          maxLines: 10,
           expandOnTextTap: true,
           collapseOnTextTap: true,
           linkColor: Colors.blue,
@@ -160,12 +232,6 @@ Widget _buildBackButton(BuildContext context) {
     width: 40,
     height: 40,
     child: Container(
-      foregroundDecoration: ShapeDecoration(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-          side: BorderSide(color: Colors.white),
-        ),
-      ),
       child: IconButton(
         icon: Icon(
           Icons.arrow_back,
@@ -182,22 +248,12 @@ Widget _buildBackButton(BuildContext context) {
 Widget _buildPosterImage(String profilePath, {double height}) {
   String profileImageUrl = '${Urls.originalImagePath}$profilePath';
   return SizedBox(
-    height: height * 1.4,
-    width: height * 1.2 * 2 / 3,
+    height: height,
+    width: height,
     child: Container(
-      decoration: BoxDecoration(
-        image: DecorationImage(
-          image: NetworkImage(profileImageUrl),
-          fit: BoxFit.cover,
-        ),
-        borderRadius: BorderRadius.all(Radius.circular(16)),
-        color: Colors.transparent,
-      ),
-      foregroundDecoration: ShapeDecoration(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: Colors.black),
-        ),
+      child: CircleAvatar(
+        backgroundImage: NetworkImage(profileImageUrl),
+        backgroundColor: Colors.transparent,
       ),
     ),
   );

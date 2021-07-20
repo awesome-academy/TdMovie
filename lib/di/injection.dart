@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
 import 'package:td_movie/platform/database/database.dart';
+import 'package:td_movie/platform/repositories/cast_repository.dart';
 import 'package:td_movie/platform/repositories/favorite_repository.dart';
 import 'package:td_movie/platform/repositories/genres_repository.dart';
 import 'package:td_movie/platform/repositories/movie_repository.dart';
@@ -27,4 +28,8 @@ configureDependencies() async {
   getIt.registerLazySingleton(() => DatabaseProvider.databaseProvider);
 
   getIt.registerLazySingleton<FavoriteRepository>(() => FavoriteRepository());
+
+  getIt.registerLazySingleton<CastRepository>(
+    () => CastRepository(api: getIt.get<Api>()),
+  );
 }

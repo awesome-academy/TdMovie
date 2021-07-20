@@ -1,17 +1,21 @@
 import 'package:expandable_text/expandable_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:td_movie/base/base.dart';
 import 'package:td_movie/blocs/blocs.dart';
+import 'package:td_movie/blocs/cast_detail/blocs.dart';
 import 'package:td_movie/blocs/favorite/blocs.dart';
+import 'package:td_movie/di/injection.dart';
 import 'package:td_movie/domain/model/models.dart';
 import 'package:td_movie/extension//build_context_ext.dart';
+import 'package:td_movie/platform/repositories/cast_repository.dart';
 import 'package:td_movie/platform/services/api/urls.dart';
 import 'package:td_movie/ui/components/collapsed_appbar_title.dart';
 import 'package:td_movie/ui/components/common/movie_item.dart';
+import 'package:td_movie/ui/components/common/route_to_detail.dart';
 import 'package:td_movie/ui/components/rating_bar_indicator.dart';
+import 'package:td_movie/ui/screen/cast_detail/cast_detail_page.dart';
 import 'package:td_movie/ui/screen/detail/animation_favorite.dart';
 import 'package:td_movie/ui/screen/detail/animation_play_trailer.dart';
 import 'package:td_movie/ui/screen/detail/cast_item.dart';
@@ -460,7 +464,7 @@ class _DetailPageState extends State<DetailPage> {
         SizedBox(height: 8),
         ConstrainedBox(
           constraints: BoxConstraints(
-            maxHeight: 200,
+            maxHeight: 170,
           ),
           child: ListView.builder(
             itemCount: data.length,
@@ -475,11 +479,7 @@ class _DetailPageState extends State<DetailPage> {
                   child: CastItem(cast: cast),
                 ),
                 onTap: () {
-                  final snackBar = SnackBar(
-                    content: Text(cast.originalName),
-                    duration: const Duration(milliseconds: 500),
-                  );
-                  ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                  Navigator.of(context).push(_navigateToCastDetail(cast));
                 },
               );
             },
@@ -573,6 +573,31 @@ Widget _getInProgressContainer(DetailLoadInProgress state) {
           ),
         ],
       ),
+    ),
+  );
+}
+
+Route _navigateToCastDetail(Cast cast) {
+  return PageRouteBuilder(
+    pageBuilder: (
+      context,
+      animation,
+      secondaryAnimation,
+    ) => BlocProvider(
+      create: (context) => CastDetailBloc(getIt.get<CastRepository>())
+        ..add(GetCastDetail(cast.id)),
+      child: CastDetailPage(),
+    ),
+    transitionsBuilder: (
+      context,
+      animation,
+      secondaryAnimation,
+      child,
+    ) => buildCommonTransitions(
+      context,
+      animation,
+      secondaryAnimation,
+      child,
     ),
   );
 }

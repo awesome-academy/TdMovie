@@ -85,4 +85,10 @@ class Api {
     final movieList = MovieList.fromJson(response.data);
     return movieList;
   }
+
+  Future<Cast> getCastDetail(int id) async {
+    final response = await dio.get('${Urls.castDetailPath}/$id');
+    final cast = Cast.fromJson(response.data);
+    return cast;
+  }
 }

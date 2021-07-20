@@ -46,6 +46,7 @@ class CastItem extends StatelessWidget {
               fontSize: 14,
             ),
             textAlign: TextAlign.center,
+            maxLines: 1,
           ),
           SizedBox(height: 4),
           Text(
@@ -55,6 +56,7 @@ class CastItem extends StatelessWidget {
               fontSize: 12,
             ),
             textAlign: TextAlign.center,
+            maxLines: 1,
           ),
         ],
       ),
