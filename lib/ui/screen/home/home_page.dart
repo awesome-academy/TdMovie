@@ -132,9 +132,7 @@ class _HomePageState extends State<HomePage> {
                 return InkWell(
                   child: Padding(
                     padding: EdgeInsets.symmetric(horizontal: 16),
-                    child: MovieItem(
-                      movie: movie,
-                    ),
+                    child: MovieItem(movie: movie),
                   ),
                   onTap: () {
                     Navigator.of(innerContext).push(navigateToDetail(movie));
